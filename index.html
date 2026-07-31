@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía Interactiva - El Enigma de la Ciudad Imperial</title>
+<!-- Leaflet CSS para el mapa interactivo profesional -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+:root {
+  --primary: #1a252f;
+  --primary-light: #2c3e50;
+  --accent: #d35400;
+  --accent-hover: #e67e22;
+  --accent-gold: #d4af37;
+  --bg: #0f141a;
+  --card-bg: #1e2631;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --border: #334155;
+  --radius: 12px;
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* Pantalla de Carga Inicial (Pre-loader) */
+#preload-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #0b0f15;
+  z-index: 20000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#preload-screen.fade-out {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.preload-content {
+  text-align: center;
+  max-width: 340px;
+  padding: 20px;
+}
+
+.preload-cover {
+  width: 100%;
+  max-width: 220px;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+  margin-bottom: 20px;
+  border: 2px solid var(--border);
+}
+
+.preload-title {
+  color: #ffffff;
+  font-size: 1.2rem;
+  margin-bottom: 5px;
+  font-weight: 700;
+}
+
+.preload-author {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 25px;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 6px;
+  background: #1e2631;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+  background-color: var(--accent);
+  transition: width 0.1s linear;
+}
+
+.progress-text {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-top: 10px;
+  font-family: monospace;
+}
+
+/* Pantalla de Login */
+#login-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(15, 20, 26, 0.85), rgba(15, 20, 26, 0.95)), url('image_25325b.jpg') no-repeat center center/cover;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.login-card {
+  background: rgba(30, 38, 49, 0.92);
+  backdrop-filter: blur(10px);
+  padding: 30px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 20px 25px 5px rgba(0, 0, 0, 0.7);
+  text-align: center;
+}
+
+.login-card h2 {
+  margin-top: 0;
+  color: #ffffff;
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.login-card p {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+  font-weight: 600;
+}
+
+.form-control {
+  width: 100%;
+  padding: 12px;
+  background: #111827;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: white;
+  font-size: 1rem;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.login-error {
+  color: #e74c3c;
+  font-size: 0.85rem;
+  margin-top: 10px;
+  display: none;
+}
+
+header {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  color: white;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+header p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+}
+
+.container {
+  max-width: 1100px;
+  margin: -30px auto 40px auto;
+  padding: 0 20px;
+  position: relative;
+  z-index: 10;
+}
+
+/* Navegación por pestañas */
+.nav-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 25px;
+}
+
+.tab-btn {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  padding: 12px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: var(--transition);
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+
+.tab-btn:hover:not(.active) {
+  background: #283548;
+  color: var(--text);
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block !important;
+}
+
+/* Tarjeta de Estado GPS */
+.status-card {
+  background: var(--card-bg);
+  padding: 20px 25px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.status-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.status-dot {
+  width: 12px;
+  height: 12px;
+  background-color: #e74c3c;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 0 4px rgba(231, 76, 60, 0.2);
+  transition: var(--transition);
+}
+
+.status-dot.active {
+  background-color: #2ecc71;
+  box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.2);
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: var(--transition);
+  box-shadow: 0 2px 4px rgba(211, 84, 0, 0.2);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+/* Contenedor del Mapa */
+#map {
+  width: 100%;
+  height: 450px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 30px;
+  border: 1px solid var(--border);
+}
+
+/* Lista y Tarjetas de Ubicaciones */
+.location-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.location-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  border-top: 4px solid var(--primary-light);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  border: 1px solid var(--border);
+}
+
+.location-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 15px 3px rgba(0, 0, 0, 0.5);
+}
+
+.location-card.active {
+  border-top-color: var(--accent);
+  background: #232b38;
+  border-color: var(--accent);
+}
+
+.location-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.location-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.badge {
+  background: var(--primary-light);
+  color: white;
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  border-radius: 20px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+}
+
+.details p {
+  margin: 10px 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+}
+
+.details strong {
+  color: var(--text);
+}
+
+.btn-ar {
+  background-color: var(--primary-light);
+  color: white;
+  border: 1px solid var(--border);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  width: 100%;
+  margin-top: 15px;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-ar:hover {
+  background-color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* Modal WebAR con Imagen Real */
+#ar-modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.ar-modal-content {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  max-width: 600px;
+  width: 100%;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: 0 20px 25px 5px rgba(0, 0, 0, 0.7);
+  position: relative;
+  text-align: center;
+}
+
+.ar-modal-content h3 {
+  margin-top: 0;
+  color: #ffffff;
+}
+
+.ar-viewer-container {
+  position: relative;
+  width: 100%;
+  height: 350px;
+  background: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-bottom: 15px;
+  border: 1px solid var(--border);
+}
+
+.ar-viewer-container video, .ar-viewer-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.ar-viewer-container img {
+  opacity: 0.9;
+  transition: opacity 0.3s;
+}
+
+.ar-hud {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  display: flex;
+  justify-content: space-between;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.ar-badge {
+  background: rgba(0, 0, 0, 0.7);
+  color: #2ecc71;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  border: 1px solid #2ecc71;
+  font-family: monospace;
+}
+
+.btn-close-ar {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Sección del Quiz */
+.quiz-container {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 30px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.quiz-question {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 20px;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.quiz-option {
+  background: #111827;
+  border: 2px solid var(--border);
+  padding: 15px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: var(--transition);
+  text-align: left;
+  width: 100%;
+  color: var(--text);
+}
+
+.quiz-option:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: #1f2937;
+}
+
+.quiz-option.correct {
+  background: rgba(46, 204, 113, 0.2) !important;
+  border-color: #2ecc71 !important;
+  color: #2ecc71;
+}
+
+.quiz-option.incorrect {
+  background: rgba(231, 76, 60, 0.2) !important;
+  border-color: #e74c3c !important;
+  color: #e74c3c;
+}
+
+.quiz-score {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: bold;
+  color: #ffffff;
+}
+header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  /* Nuevas propiedades para alinear la imagen */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.header-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+  .status-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .btn-primary {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Pantalla de Carga Inicial con la Imagen del Libro -->
+<div id="preload-screen">
+  <div class="preload-content">
+    <img src="./img/enigma.jpg" alt="Portada El Enigma de la Ciudad Imperial" class="preload-cover">
+    <div class="preload-title">El Enigma de la Ciudad Imperial</div>
+    <div class="progress-bar-container">
+      <div id="progress-bar" class="progress-bar"></div>
+    </div>
+    <div id="progress-text" class="progress-text">Cargando sistema... 0%</div>
+  </div>
+</div>
+
+<!-- Pantalla de Login -->
+<div id="login-screen" style="display: none;">
+  <div class="login-card">
+    <h2>Acceso Inspectores</h2>
+    <p>Introduce las credenciales de la investigación</p>
+    <div class="form-group">
+      <label>Usuario</label>
+      <input type="text" id="login-user" class="form-control" value="ROBLES">
+    </div>
+    <div class="form-group">
+      <label>Contraseña</label>
+      <input type="password" id="login-pass" class="form-control" placeholder="Contraseña">
+    </div>
+    <div id="login-error" class="login-error">Usuario o contraseña incorrectos.</div>
+    <button class="btn-primary" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">Acceder</button>
+  </div>
+</div>
+
+<header>
+  <h1><img src="./img/detective.png" alt="Logo Toledo" class="header-logo">
+    Toledo: La Ruta de El Artista</h1>
+  <p>Descubre los misterios tras los pasos de la investigación</p>
+</header>
+
+<div class="container">
+  <!-- Navegación por pestañas -->
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('locations')">Puntos de la Novela</button>
+    <button class="tab-btn" onclick="switchTab('quiz')">Quiz Literario</button>
+    <button class="tab-btn" onclick="switchTab('expediente')">Expediente UDEV</button>
+  </div>
+
+  <!-- CONTENIDO: UBICACIONES Y MAPA -->
+  <div id="locations-tab" class="tab-content active">
+    <div class="status-card">
+      <div class="status-info">
+        <span id="status-dot" class="status-dot"></span>
+        <div>
+          <strong>Estado del GPS:</strong> <span id="gps-status">Buscando señal satelital...</span>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="initGPS()">Actualizar Posición GPS</button>
+    </div>
+    <!-- Mapa Interactivo Leaflet -->
+    <div id="map"></div>
+    <div class="location-list" id="location-container">
+      <!-- Se cargan dinámicamente -->
+    </div>
+  </div>
+
+  <!-- CONTENIDO: QUIZ -->
+  <div id="quiz-tab" class="tab-content">
+    <div class="quiz-container" id="quiz-box">
+      <!-- Carga dinámica del Quiz -->
+    </div>
+  </div>
+
+  <!-- CONTENIDO: EXPEDIENTE UDEV -->
+  <div id="expediente-tab" class="tab-content"></div>
+</div>
+
+<!-- Modal WebAR con Cámara y Vistas Reales -->
+<div id="ar-modal">
+  <div class="ar-modal-content">
+    <h3 id="ar-modal-title">Experiencia WebAR</h3>
+    <div class="ar-viewer-container">
+      <video id="ar-video" autoplay playsinline muted></video>
+      <img id="ar-real-img" src="" alt="Vista Real Toledo">
+      <div class="ar-hud">
+        <span class="ar-badge">LIVE AR MESH</span>
+        <span class="ar-badge" id="ar-coords">GPS: LOCKED</span>
+      </div>
+    </div>
+    <p id="ar-modal-desc" style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 15px;"></p>
+    <button class="btn-close-ar" onclick="closeAR()">Cerrar AR</button>
+  </div>
+</div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+// Simulación de barra de carga al iniciar la página
+window.addEventListener('DOMContentLoaded', () => {
+  let progress = 0;
+  const bar = document.getElementById('progress-bar');
+  const text = document.getElementById('progress-text');
+  const preloadScreen = document.getElementById('preload-screen');
+  const loginScreen = document.getElementById('login-screen');
+
+  const interval = setInterval(() => {
+    progress += Math.floor(Math.random() * 12) + 5;
+    if (progress >= 100) {
+      progress = 100;
+      clearInterval(interval);
+      text.textContent = "Sistema listo (100%)";
+      setTimeout(() => {
+        preloadScreen.classList.add('fade-out');
+        setTimeout(() => {
+          preloadScreen.style.display = 'none';
+          loginScreen.style.display = 'flex';
+        }, 600);
+      }, 400);
+    }
+    bar.style.width = progress + '%';
+    text.textContent = `Cargando sistema... ${progress}%`;
+  }, 80);
+
+  renderLocations();
+  initMap();
+  renderExpedienteUDEV();
+  renderQuiz();
+});
+
+function handleLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value.trim();
+  const errorDiv = document.getElementById('login-error');
+
+  if (user === 'ROBLES' && pass === 'Enigma') {
+    document.getElementById('login-screen').style.display = 'none';
+  } else {
+    errorDiv.style.display = 'block';
+  }
+}
+
+// Datos de las ubicaciones
+const locationsData = [
+  {
+    id: 1,
+    name: "Punto 1: Arroyo de la Senda de la Degollada",
+    part: "Parte 1",
+    coords: { lat: 39.8515, lon: -4.0175 },
+    radius: 100,
+    audioText: "El susurro del agua y la neblina del arroyo ocultaron el primer compás de la tragedia. Aquí comenzó el juego macabro de El Artista con el cuerpo del fotógrafo Rafael Soler...",
+    arDesc: "Reconstrucción virtual sobre el entorno natural del arroyo donde fue hallado el fotógrafo.",
+    realImg: "./img/Toledo1.jpg"
+  },
+  {
+    id: 2,
+    name: "Punto 2: Pub Camelot",
+    part: "Parte 1",
+    coords: { lat: 39.8585, lon: -4.0232 },
+    radius: 50,
+    audioText: "El lugar de ocio (Calle Cristo de la Luz) donde Martina Arenas disfrutaba de la música y de la compañía de sus amigos antes de emprender su fatídico camino de regreso a casa.",
+    arDesc: "Ambientación visual nocturna superpuesta en las calles del casco antiguo.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 3,
+    name: "Punto 3: Plaza de Zocodover",
+    part: "Parte 1",
+    coords: { lat: 39.8594, lon: -4.0186 },
+    radius: 50,
+    audioText: "El transitado punto neurálgico de Toledo donde Martina se despidió de sus amigos y por el que transcurren habitualmente las pesquisas de los inspectores.",
+    arDesc: "Superposición de rutas virtuales de los sospechosos en el corazón de Zocodover.",
+    realImg: "./img/Toledo16.jpg"
+  },
+  {
+    id: 4,
+    name: "Punto 4: Calle Juan Labrador y Plaza de la Magdalena",
+    part: "Parte 1",
+    coords: { lat: 39.8576, lon: -4.0221 },
+    radius: 50,
+    audioText: "El trayecto cotidiano que realizaba Martina hacia su piso, donde fue interceptada y atacada por sorpresa en la oscuridad de la madrugada.",
+    arDesc: "Recreación interactiva de los callejones estrechos previos al secuestro.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 5,
+    name: "Punto 5: Callejón de los Muertos",
+    part: "Parte 1",
+    coords: { lat: 39.8582, lon: -4.0245 },
+    radius: 50,
+    audioText: "Entre muros estrechos donde antaño se realizaban entierros silenciosos, Martina Arenas fue encontrada simulando un maniquí blanco bajo la fría luz del alba...",
+    arDesc: "Visualización digital sobre la vista nocturna real del callejón con la Catedral de fondo.",
+    realImg: "./img/Toledo4.JPG"
+  },
+  {
+    id: 6,
+    name: "Punto 6: Puerta de Bisagra",
+    part: "Parte 1",
+    coords: { lat: 39.8631, lon: -4.0274 },
+    radius: 100,
+    audioText: "La imponente entrada a la ciudad amurallada por donde Daniel Robles accedió a Toledo para incorporarse a su primer gran caso como inspector.",
+    arDesc: "Superposición histórica sobre la monumental fachada de la Puerta de Bisagra.",
+    realImg: "./img/Toledo5.jpg"
+  },
+  {
+    id: 7,
+    name: "Punto 7: Avenida Plaza de Toros",
+    part: "Parte 1",
+    coords: { lat: 39.8612, lon: -4.0345 },
+    radius: 60,
+    audioText: "Zona donde el inspector Robles reflexiona tras el levantamiento del cadáver y desde donde se desplaza para reunirse con la forense Miriam Rodríguez.",
+    arDesc: "Visualización 3D de los trayectos recorridos por el equipo de investigación.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 8,
+    name: "Punto 8: Cafetería París",
+    part: "Parte 1",
+    coords: { lat: 39.8578, lon: -4.0195 },
+    radius: 40,
+    audioText: "Punto de encuentro confidencial entre el comisario Lucas Buendía y el inspector Daniel Robles para analizar el avance del perturbador caso.",
+    arDesc: "Reconstrucción ambiental de las reuniones discretas de la cúpula policial.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 9,
+    name: "Punto 9: Jefatura Superior de Policía (UDEV)",
+    part: "Parte 1",
+    coords: { lat: 39.8658, lon: -4.0205 },
+    radius: 50,
+    audioText: "El centro neurálgico de las reuniones operativas y la coordinación de la brigada judicial para descifrar las pistas del asesino en serie.",
+    arDesc: "Acceso interactivo a los expedientes y dosieres desclasificados del caso.",
+    realImg: "./img/Toledo6.jpg"
+  },
+  {
+    id: 10,
+    name: "Punto 10: Plaza Amador de los Ríos",
+    part: "Parte 1",
+    coords: { lat: 39.8554, lon: -4.0212 },
+    radius: 40,
+    audioText: "Lugar donde los inspectores Robles y Hernández citan e interrogan a Jesús, el amigo y último acompañante de la víctima Martina.",
+    arDesc: "Simulación de las declaraciones de los testigos clave sobre la plaza.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 11,
+    name: "Punto 11: Cuesta de Santa Leocadia",
+    part: "Parte 1",
+    coords: { lat: 39.8592, lon: -4.0289 },
+    radius: 50,
+    audioText: "Empinada calle por donde Daniel Robles realiza sus carreras nocturnas de madrugada, sumergiéndose en el silencio y la tensión de la ciudad.",
+    arDesc: "Efectos de iluminación nocturna y simulación de patrullaje en solitario.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 12,
+    name: "Punto 12: Cerro del Bú y La Casa del Diamantista",
+    part: "Parte 1",
+    coords: { lat: 39.8492, lon: -4.0134 },
+    radius: 200,
+    audioText: "Paraje natural y arqueológico donde la pareja de deportistas Lorena y Miguel comenzó su ruta de footing antes de desvanecerse sin dejar rastro.",
+    arDesc: "Mapa interactivo 3D flotante con las rutas de rastreo arqueológico.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 13,
+    name: "Punto 13: Departamento de Historia (Calle Sixto Ramón Parro)",
+    part: "Parte 1",
+    coords: { lat: 39.8567, lon: -4.0225 },
+    radius: 50,
+    audioText: "Instalaciones universitarias e históricas en la calle Sixto Ramón Parro donde Robles consulta al historiador Luis Rodríguez Bausá sobre las leyendas toledanas.",
+    arDesc: "Visualización de manuscritos históricos sobre la fachada de la calle Sixto Ramón Parro.",
+    realImg: "./img/Toledo9.jpg"
+  },
+  {
+    id: 14,
+    name: "Punto 14: Puerta del Reloj de la Catedral Primada",
+    part: "Parte 1",
+    coords: { lat: 39.8568, lon: -4.0241 },
+    radius: 50,
+    audioText: "Un protector abrazo de piedra. Aquí, la pareja de deportistas Lorena y Miguel fueron hallados abrazados en un hueco del muro, marcando el ascenso en la violencia del asesino...",
+    arDesc: "Proyección virtual de los rastros de la estructura gótica de la Catedral.",
+    realImg: "./img/Toledo10.jpg"
+  },
+  {
+    id: 15,
+    name: "Punto 15: Calle Comercio y redacción de El Confidente",
+    part: "Parte 1",
+    coords: { lat: 39.8581, lon: -4.0203 },
+    radius: 40,
+    audioText: "Entorno comercial y redacción periodística donde la prensa sensacionalista procesa y publica las exclusivas sobre los crímenes de El Artista.",
+    arDesc: "Visualización interactiva de titulares de prensa antiguos sobre la calle Comercio.",
+    realImg: "./img/Toledo19.jpg"
+  },
+  {
+    id: 16,
+    name: "Punto 16: Barrio de San Miguel y Plaza del Seco",
+    part: "Parte 2",
+    coords: { lat: 39.8584, lon: -4.0258 },
+    radius: 60,
+    audioText: "Entorno residencial y artístico donde se ubica el estudio del pintor Jorge Vázquez, pieza clave en la conexión con las ilustraciones del asesino.",
+    arDesc: "Inspección virtual de lienzos y estudios de arte integrados en el barrio.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 17,
+    name: "Punto 17: Calle Alfileritos, 15 (Piso de Daniel)",
+    part: "Parte 2",
+    coords: { lat: 39.8573, lon: -4.0234 },
+    radius: 40,
+    audioText: "El hogar del inspector Robles, que sufre una escalofriante intrusión por parte del asesino para dejarle una macabra calavera y una nota de advertencia.",
+    arDesc: "Recreación forense de la escena de invasión en el emblemático Arco de Alfileritos.",
+    realImg: "./img/Toledo12.jpg"
+  },
+  {
+    id: 18,
+    name: "Punto 18: Sinagoga de Santa María la Blanca",
+    part: "Parte 2",
+    coords: { lat: 39.8589, lon: -4.0312 },
+    radius: 60,
+    audioText: "Silencio espeso y columnas milenarias. En este mismo recinto, el inspector Daniel Robles fue interceptado y envenenado por el misterioso enmascarado bajo la sombra de un medallón templario...",
+    arDesc: "Visualización interactiva del medallón templario sobre las columnas mudéjares.",
+    realImg: "./img/enigma.jpg"
+  },
+  {
+    id: 19,
+    name: "Punto 19: Zona entre el Palacio de la Cava y San Juan de los Reyes",
+    part: "Parte 2",
+    coords: { lat: 39.8578, lon: -4.0331 },
+    radius: 80,
+    audioText: "La representación grotesca de la leyenda de El hombre de Palo. Tablas de madera ensambladas con precisión quirúrgica para cerrar el ciclo de este primer gran caso...",
+    arDesc: "Animación WebAR con la estructura monumental de San Juan de los Reyes y el Tajo de fondo.",
+    realImg: "./img/enigma.jpg"
+  }
+];
+
+// Datos del Quiz literario
+const quizData = [
+  {
+    question: "¿Cuál es el nombre del inspector protagonista que se incorpora a la comisaría de Toledo para investigar los crímenes?",
+    options: ["Lucas Buendía", "Daniel Robles", "Jesús Martín", "Jorge Vázquez"],
+    answer: 1
+  },
+  {
+    question: "En el Callejón de los Muertos, ¿cómo fue encontrada la primera víctima principal, Martina Arenas?",
+    options: ["Atada a una columna romana", "Simulando un maniquí blanco", "Flotando en el río Tajo", "Sentada en un banco de piedra"],
+    answer: 1
+  },
+  {
+    question: "¿Qué leyenda tradicional toledana inspira la macabra puesta en escena del último crimen de la novela (Punto 19)?",
+    options: ["La mesa del rey Salomón", "El hombre de Palo", "La cueva de Hércules", "La espada de Roldán"],
+    answer: 1
+  },
+  {
+    question: "¿En qué emblemático monumento toledano fue envenenado el inspector Robles por el enmascarado?",
+    options: ["Catedral Primada", "Sinagoga de Santa María la Blanca", "Monasterio de San Juan de los Reyes", "Alcázar de Toledo"],
+    answer: 1
+  },
+  {
+    question: "¿Qué profesión tenía Rafael Soler, la primera víctima de la trama criminal en el Arroyo de la Senda de la Degollada?",
+    options: ["Historiador", "Fotógrafo", "Pintor", "Periodista"],
+    answer: 1
+  },
+  {
+    question: "¿Cuál es el nombre del autor de la novela 'El Enigma de la Ciudad Imperial'?",
+    options: ["Dolores Redondo", "Gonzalo Abad Alonso", "Rosa Montero", "Jorge Díaz"],
+    answer: 1
+  }
+];
+
+// DATOS EXTRAÍDOS DEL EXPEDIENTE UDEV
+const expedienteUDEVData = {
+  sospechoso: {
+    alias: "El Artista",
+    nombreReal: "Diego de Villena",
+    clasificacion: "Psicópata Organizativo / Escultor Macabro",
+    modusOperandi: "Transforma las escenas del crimen en escenografías teatrales con alta carga simbólica en puntos clave de la ciudad de Toledo.",
+    firmaPolicial: "Deja notas mecanografiadas con máquina Hispano Olivetti Studio 46 dentro de calaveras junto a las víctimas.",
+    investigador: "Inspector Daniel Robles - Grupo UDEV Toledo"
+  },
+     victimas: [
+        {
+            id: 1,
+            nombre: "Rafael Soler",
+            lugar: "Arroyo de la Degollada",
+            escena: "Hallado boca arriba y con la mano derechaen el pecho.",
+            evidenciaClave: "Hilo negro , calavera, nota.",
+            leyendaAsociada: "Hombre de la mano en el pecho"
+        },
+        {
+            id: 2,
+            nombre: "Martina Arenas",
+            lugar: "Callejón de los Muertos",
+            escena: "Localizada simulando la pose de un maniquí con cortes de precisión.",
+            evidenciaClave: "Hilo negro , calavera, nota y velas.",
+            leyendaAsociada: "La dama de ojos sin brillo"
+        },
+        {
+            id: 3,
+            nombre: "Miguel y Lorena",
+            lugar: "Puerta del Reloj (Catedral Primada)",
+            escena: "Encontrados abrazados junto a la pared de la catedral",
+            evidenciaClave: "Calavera con nota y velas.",
+            leyendaAsociada: "Cristo de las Cuchilladas"
+        },
+        {
+            id: 4,
+            nombre: "Desconocida",
+            lugar: "San Juan de los Reyes",
+            escena: "Encontrada con tablas de madera en su cuerpo.",
+            evidenciaClave: "Medallón Templario bajo la vestimenta.",
+            leyendaAsociada: "El hombre de palo"
+        }
+    ],
+    evidencias: [
+        {
+            id: 1,
+            nombre: "Hilo & Cera Negra",
+            descripcion: "Fibras textiles oscuras encontradas en incisiones y restos de parafina dispuesta en pentagrama alrededor del cuerpo."
+        },
+        {
+            id: 2,
+            nombre: "Máquina Hispano Olivetti Studio 46",
+            descripcion: "Tipografía característica con desgaste en el tipo de la letra 'e' y 't', clave para autenticar los acertijos."
+        },
+        {
+            id: 3,
+            nombre: "Tablas de madera",
+            descripcion: "Tablas de madera ensambladas con precisión quirúrgica"
+        }
+    ],
+    decodificador: [
+        {
+            id: 1,
+            caso: "Caso Rafael Soler",
+            acertijo: "En soledad, en el más sombrío Mortuorio, el silencio aparecerá por sorpresa. Envuelta en un manto de misterio, la dama se deslizará pálida y sigilosa entre las sombras de la noche.",
+            solucion: "Callejón de los Muertos"
+        },
+        {
+            id: 2,
+            caso: "Caso Martina Arenas",
+            acertijo: "De entre las sombras de la noche toledana a duras penas iluminada por el pequeño farolillo, cuenta su leyenda; abriéndose un enorme hueco en el muro absorbe en un protector abrazo a la pareja llevándolos hacia lo más profundo.",
+            solucion: "Cristo de las Cuchilladas"
+        },
+        {
+            id: 3,
+            caso: "Caso Miguel y Lorena",
+            acertijo: "De entre las sombras del cobertizo a duras penas iluminado por la luna, cuenta su leyenda; Un hombre de madera armado con escudo en el lado izquierdo se mueve con lentitud y determinación por las calles toledanas",
+            solucion: "El hombre de palo"
+        }
+    ]
+
+};
+
+let calaveraIndice = 0;
+let currentQuestion = 0;
+let score = 0;
+let map, userMarker;
+let activeStream = null;
+
+// Función para cambiar de pestaña
+function switchTab(tabName) {
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+  });
+
+  const targetTab = document.getElementById(`${tabName}-tab`);
+  if (targetTab) {
+    targetTab.classList.add('active');
+  }
+
+  // Activar botón pulsado
+  const btnActive = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabName));
+  if (btnActive) btnActive.classList.add('active');
+
+  if (tabName === 'expediente') {
+    renderExpedienteUDEV();
+  } else if (tabName === 'quiz') {
+    renderQuiz();
+  }
+}
+
+// Función que maqueta dinámicamente toda la información del expediente
+function renderExpedienteUDEV() {
+  const container = document.getElementById('expediente-tab');
+  if (!container) return;
+
+  const s = expedienteUDEVData.sospechoso;
+  const notaActual = expedienteUDEVData.decodificador[calaveraIndice];
+
+  container.innerHTML = `
+   <h2 style="color: var(--accent-gold); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px;">
+  <img src="./img/dosier.png" alt="Dosier" style="width: 32px; height: auto;">
+  Expediente Policial UDEV - Los Crímenes de Toledo
+</h2>
+    <!-- Ficha del Sospechoso -->
+    <div style="border: 2px solid var(--accent-gold); background: #121212; padding: 1.2rem; border-radius: 8px; margin-bottom: 2rem;">
+      <h3 style="color: var(--accent-gold); margin-top: 0;">PERFIL DEL SOSPECHOSO: ${s.nombreReal} / "${s.alias}"</h3>
+      <p><strong>Clasificación:</strong> ${s.clasificacion}</p>
+      <p><strong>Modus Operandi:</strong> ${s.modusOperandi}</p>
+      <p><strong>Firma Policial:</strong> ${s.firmaPolicial}</p>
+      <p><strong>Investigador a cargo:</strong> ${s.investigador}</p>
+    </div>
+
+    <!-- Registro de Víctimas -->
+    <h3>Registro de Víctimas Identificadas</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      ${expedienteUDEVData.victimas.map(v => `
+        <div style="background: #1e1e1e; border: 1px solid #333; padding: 1rem; border-radius: 8px; position: relative;">
+          <span style="position: absolute; top: 10px; right: 10px; background: #8b0000; color: #fff; font-size: 0.65rem; padding: 2px 6px; border-radius: 3px; font-weight: bold;">CONFIDENCIAL UDEV</span>
+          <h4 style="color: var(--accent-gold); margin: 0 0 8px 0;">${v.nombre}</h4>
+          <p style="font-size: 0.9rem; margin: 4px 0;"><strong>Ubicación:</strong> ${v.lugar}</p>
+          <p style="font-size: 0.9rem; margin: 4px 0;"><strong>Leyenda:</strong> ${v.leyendaAsociada}</p>
+          <p style="font-size: 0.9rem; margin: 4px 0;"><strong>Escena:</strong> ${v.escena}</p>
+          <p style="font-size: 0.9rem; margin: 4px 0;"><strong>Evidencia:</strong> ${v.evidenciaClave}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Mesa de Evidencias -->
+    <h3>Mesa de Evidencias Forenses</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+      ${expedienteUDEVData.evidencias.map(e => `
+        <div onclick="alert('[EVIDENCIA #${e.id}]: ${e.nombre}\\n\\n${e.descripcion}')" style="background: #181818; border: 1px solid #333; padding: 1rem; border-radius: 6px; cursor: pointer;">
+          <div style="font-size: 1.5rem;">🔍</div>
+          <h4 style="margin: 5px 0; color: #fff;">${e.nombre}</h4>
+          <p style="font-size: 0.8rem; color: #ccc; margin: 0;">${e.descripcion}</p>
+        </div>
+      `).join('')}
+    </div>
+
+    <!-- Decodificador de Calaveras -->
+    <h3>Decodificador Calavera 3D / Hispano Olivetti</h3>
+    <div style="background: #181818; padding: 1.5rem; border-radius: 8px; border: 1px solid #333;">
+      <label for="select-caso-udev"><strong>Seleccionar Caso Interceptado:</strong></label>
+      <select id="select-caso-udev" onchange="calaveraIndice = parseInt(this.value); renderExpedienteUDEV();" style="padding: 0.4rem; margin-left: 8px; background: #222; color: #fff; border: 1px solid #555; border-radius: 4px;">
+        ${expedienteUDEVData.decodificador.map((c, idx) => `
+          <option value="${idx}" ${idx === calaveraIndice ? 'selected' : ''}>${c.caso}</option>
+        `).join('')}
+      </select>
+      
+      <div onclick="document.getElementById('nota-mecanografiada').style.display='block';" style="text-align: center; margin: 1.5rem 0; cursor: pointer; background: radial-gradient(circle, #2a2a2a 0%, #111 80%); border: 1px dashed var(--accent-gold); padding: 1.5rem; border-radius: 8px;">
+        <span style="font-size: 3.5rem;">💀</span>
+        <p style="color: var(--accent-gold); margin: 5px 0 0 0; font-size: 0.9rem;"><em>(Haz clic en la calavera para extraer la nota oculta)</em></p>
+      </div>
+
+      <div id="nota-mecanografiada" style="display: none; background: #f4e8c1; color: #111; padding: 1.2rem; font-family: 'Courier New', Courier, monospace; border-radius: 4px;">
+        <h4 style="margin-top:0;">[ACERTIJO HISPANO OLIVETTI STUDIO 46]</h4>
+        <p style="font-size: 1rem; font-weight: bold;">"${notaActual.acertijo}"</p>
+        <hr style="border-color: #8b5a2b; margin: 8px 0;">
+        <div style="margin-top: 1rem; display: flex; gap: 8px;">
+          <input type="text" id="input-solucion" placeholder="Escribe el lugar de Toledo..." style="flex: 1; padding: 0.5rem;">
+          <button onclick="comprobarDeduccion()" style="padding: 0.5rem 1rem; background: #8b0000; color: white; border: none; cursor: pointer;">Decodificar</button>
+        </div>
+        <p id="msg-resultado" style="margin-top: 10px; font-weight: bold;"></p>
+      </div>
+    </div>
+  `;
+}
+
+// Validación de acertijos
+function comprobarDeduccion() {
+  const input = document.getElementById('input-solucion').value.trim().toLowerCase();
+  const msg = document.getElementById('msg-resultado');
+  const solucionCorrecta = expedienteUDEVData.decodificador[calaveraIndice].solucion.toLowerCase();
+
+  if (input && input.includes(solucionCorrecta)) {
+    msg.textContent = "✓ COINCIDENCIA CONFIRMADA CON LAS DEDUCCIONES DEL INSPECTOR ROBLES.";
+    msg.style.color = "#27ae60";
+  } else {
+    msg.textContent = "✗ DEDUCCIÓN INCORRECTA. Revisa las evidencias del expediente UDEV.";
+    msg.style.color = "#c0392b";
+  }
+}
+
+// Inicializar Mapa Leaflet centrado en el casco histórico de Toledo
+function initMap() {
+  map = L.map('map').setView([39.8567, -4.0244], 15);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+}
+
+function renderLocations(activeId = null) {
+  const container = document.getElementById("location-container");
+  container.innerHTML = "";
+  locationsData.forEach(loc => {
+    const isActive = loc.id === activeId;
+    const card = document.createElement("div");
+    card.className = `location-card ${isActive ? 'active' : ''}`;
+    card.innerHTML = `
+      <div>
+        <div class="location-header">
+          <h3 class="location-title">${loc.name}</h3>
+          <span class="badge">${loc.part}</span>
+        </div>
+        <div class="details">
+          <p><strong>Audio Guía:</strong> "${loc.audioText}"</p>
+          <p><strong>Experiencia WebAR:</strong> ${loc.arDesc}</p>
+        </div>
+      </div>
+      <button class="btn-ar" onclick="triggerAR(${loc.id})">
+        <span>📷 Activar Cámara WebAR</span>
+      </button>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function initGPS() {
+  const statusEl = document.getElementById("gps-status");
+  const dotEl = document.getElementById("status-dot");
+
+  if (!navigator.geolocation) {
+    statusEl.textContent = "La geolocalización no está soportada en este navegador.";
+    return;
+  }
+
+  statusEl.textContent = "Localizando posición en Toledo...";
+  navigator.geolocation.watchPosition(
+    (position) => {
+      const userLat = position.coords.latitude;
+      const userLon = position.coords.longitude;
+      statusEl.textContent = `Señal activa (Lat: ${userLat.toFixed(4)}, Lon: ${userLon.toFixed(4)})`;
+      dotEl.classList.add("active");
+
+      if (!userMarker) {
+        userMarker = L.marker([userLat, userLon], {
+          icon: L.divIcon({
+            className: 'user-pos-icon',
+            html: '<div style="background-color: #3498db; width: 16px; height: 16px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 8px rgba(0,0,0,0.4);"></div>',
+            iconSize: [16, 16]
+          })
+        }).addTo(map).bindPopup("Estás aquí");
+      } else {
+        userMarker.setLatLng([userLat, userLon]);
+      }
+
+      let foundActive = false;
+      locationsData.forEach(loc => {
+        const distance = calculateDistance(userLat, userLon, loc.coords.lat, loc.coords.lon);
+        if (distance <= loc.radius) {
+          renderLocations(loc.id);
+          foundActive = true;
+        }
+      });
+
+      if (!foundActive) {
+        renderLocations(null);
+      }
+    },
+    (error) => {
+      statusEl.textContent = "Error de GPS: " + error.message;
+      dotEl.classList.remove("active");
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 5000 }
+  );
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371e3;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+// Activación de Cámara WebAR con imagen real
+async function triggerAR(id) {
+  const loc = locationsData.find(l => l.id === id);
+  if (!loc) return;
+
+  document.getElementById('ar-modal-title').textContent = loc.name;
+  document.getElementById('ar-modal-desc').textContent = loc.arDesc;
+  document.getElementById('ar-real-img').src = loc.realImg;
+  document.getElementById('ar-modal').style.display = 'flex';
+
+  const videoElement = document.getElementById('ar-video');
+  try {
+    activeStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    videoElement.srcObject = activeStream;
+    videoElement.style.display = 'block';
+  } catch (err) {
+    console.log("Cámara no disponible, usando fondo alternativo simulado.");
+    videoElement.style.display = 'none';
+  }
+}
+
+function closeAR() {
+  const modal = document.getElementById('ar-modal');
+  modal.style.display = 'none';
+  if (activeStream) {
+    activeStream.getTracks().forEach(track => track.stop());
+    activeStream = null;
+  }
+  const videoElement = document.getElementById('ar-video');
+  videoElement.srcObject = null;
+}
+
+// Lógica del Quiz
+function renderQuiz() {
+  const quizBox = document.getElementById('quiz-box');
+  if (!quizBox) return;
+
+  if (currentQuestion >= quizData.length) {
+    quizBox.innerHTML = `
+      <div class="quiz-score">
+        <h3>¡Quiz completado!</h3>
+        <p>Has obtenido ${score} aciertos de ${quizData.length}.</p>
+        <button class="btn-primary" onclick="resetQuiz()" style="margin-top: 15px;">Reiniciar Quiz</button>
+      </div>
+    `;
+    return;
+  }
+
+  const q = quizData[currentQuestion];
+  let html = `
+    <div class="quiz-question">Pregunta ${currentQuestion + 1} de ${quizData.length}: ${q.question}</div>
+    <div class="quiz-options">
+  `;
+  
+  q.options.forEach((opt, index) => {
+    html += `<button class="quiz-option" onclick="selectAnswer(${index})">${opt}</button>`;
+  });
+  
+  html += '</div>';
+  quizBox.innerHTML = html;
+}
+
+function selectAnswer(selectedIndex) {
+  const q = quizData[currentQuestion];
+  const buttons = document.querySelectorAll('.quiz-option');
+  
+  buttons.forEach((btn, idx) => {
+    btn.disabled = true;
+    if (idx === q.answer) {
+      btn.classList.add('correct');
+    } else if (idx === selectedIndex) {
+      btn.classList.add('incorrect');
+    }
+  });
+
+  if (selectedIndex === q.answer) {
+    score++;
+  }
+
+  setTimeout(() => {
+    currentQuestion++;
+    renderQuiz();
+  }, 1500);
+}
+
+function resetQuiz() {
+  currentQuestion = 0;
+  score = 0;
+  renderQuiz();
+}
+</script>
+</body>
+</html>
