@@ -1,18 +1,27 @@
 {
-  "short_name": "El Enigma",
-  "name": "El Enigma de la Ciudad Imperial",
-  "description": "Expediente policial interactivo y ruta de misterio por Toledo para acompañar la lectura de la novela.",
+  "background_color": "#ffffff",
+  "dir": "ltr",
+  "display": "standalone",
+  "name": "enigma-amber.vercel",
+  "orientation": "any",
+  "scope": "/",
+  "short_name": "enigma-amber.vercel",
+  "start_url": "/",
+  "theme_color": "#111111",
   "icons": [
     {
-      "src": "/img/detective.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
-    },
-    {
-      "src": "/img/detective-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "maskable"
+      "src": "https://enigma-amber.vercel.app/favicon-32x32.png",
+      "type": "./img/detective.png",
+      "sizes": "32x32",
+      "isSquare": true,
+      "isPng": true,
+      "isWebp": false,
+      "isJpg": false,
+      "width": 32,
+      "is512x512": false,
+      "is256x256": false,
+      "is192x192": false
     }
   ],
+  "id": "1"
+}
