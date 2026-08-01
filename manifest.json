@@ -1,0 +1,26 @@
+{
+  "short_name": "El Enigma",
+  "name": "El Enigma de la Ciudad Imperial",
+  "description": "Expediente policial interactivo y ruta de misterio por Toledo para acompañar la lectura de la novela.",
+  "icons": [
+    {
+      "src": "/img/detective.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/img/detective-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#111111",
+  "theme_color": "#111111",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "es"
+}
